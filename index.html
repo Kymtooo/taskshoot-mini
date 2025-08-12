@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaskShoot Mini</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- Flatpickr (dark theme) for consistent, themeable date picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="title">TaskShoot Mini</div>
+    <div class="header-actions">
+      <div id="todayTotal" class="today-total">今日 合計 0秒</div>
+      <button id="installBtn" class="btn" style="display:none;">ホームに追加</button>
+      <button id="exportIcsBtn" class="btn">ICS(今日)</button>
+      <button id="exportJsonBtn" class="btn">JSONエクスポート</button>
+      <button id="importJsonBtn" class="btn">JSONインポート</button>
+      <input id="importJsonFile" type="file" accept="application/json,.json" style="display:none;" />
+      <button id="exportCsvBtn" class="btn">CSVエクスポート</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Now/Next at top (sticky on mobile) -->
+    <section id="nownext" class="card hscroll">
+      <div class="hscroll-inner">
+        <div id="nowNextBar" class="nownext-bar"></div>
+      </div>
+    </section>
+
+    <section id="control" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="control-row">
+        <input id="taskNameInput" class="input" placeholder="タスク名（任意。空でも開始OK）" />
+      </div>
+      <div class="control-row">
+        <button id="startStopBtn" class="btn primary big fab">開始</button>
+        <button id="quickNoteBtn" class="btn ghost" style="display:none;">メモ</button>
+        <button id="focusBtn" class="btn" style="display:none;">集中</button>
+      </div>
+      <div id="runningInfo" class="running-info" style="display:none;"></div>
+      </div>
+    </section>
+
+    <section id="plan" class="card hscroll">
+      <div class="hscroll-inner">
+        <div class="section-title">
+          <h2>今日のプラン</h2>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button id="planPrevDayBtn" class="btn">前日</button>
+            <input id="planViewDate" class="input" type="date" />
+            <button id="planTodayBtn" class="btn">今日</button>
+            <button id="planNextDayBtn" class="btn">翌日</button>
+            <button id="rolloverBtn" class="btn">未完を明日へ</button>
+            <button id="genTomorrowBtn" class="btn">明日のプラン作成</button>
+            <button id="addPlanFreeBtn" class="btn">+ 追加</button>
+            <button id="addPlanFromTplBtn" class="btn">+ ルーチンから</button>
+          </div>
+        </div>
+        <div id="planList" class="plan-list"></div>
+      </div>
+    </section>
+
+    <section id="summary" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>サマリ</h2>
+      </div>
+      <div class="summary-grid">
+        <div>
+          <label class="label">期間</label>
+          <select id="rangeSelect" class="input">
+            <option value="today">今日</option>
+            <option value="week">今週</option>
+            <option value="all">全期間</option>
+          </select>
+        </div>
+        <div id="summaryTotals" class="totals"></div>
+      </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>ダッシュボード</h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <select id="dashRangeSelect" class="input" style="width:auto;">
+            <option value="today">今日</option>
+            <option value="week">今週</option>
+            <option value="month">今月</option>
+            <option value="all">全期間</option>
+          </select>
+          <button id="dashTabTag" class="btn">タグ</button>
+          <button id="dashTabTpl" class="btn">テンプレ</button>
+          <button id="dashTabAccuracy" class="btn">精度</button>
+          <button id="dashTabHeatTpl" class="btn">ヒート(テンプレ)</button>
+          <button id="dashTabHeatTag" class="btn">ヒート(タグ)</button>
+        </div>
+      </div>
+      <div id="dashboardContent"></div>
+      </div>
+    </section>
+
+    
+
+    <section id="search" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>検索 / フィルタ</h2>
+      </div>
+      <input id="searchInput" class="input" placeholder="検索（名前 / タグ）" />
+      </div>
+    </section>
+
+    <section id="logs" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>ログ</h2>
+      </div>
+      <div id="logList"></div>
+      </div>
+    </section>
+
+    <section id="calendar" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>タイムライン（週）</h2>
+        <div style="display:flex; gap:8px;">
+          <button id="prevWeekBtn" class="btn">＜ 前週</button>
+          <button id="thisWeekBtn" class="btn">今週</button>
+          <button id="nextWeekBtn" class="btn">次週 ＞</button>
+          <select id="zoomSelect" class="input" style="width:auto;">
+            <option value="36">幅 36px/h</option>
+            <option value="40">幅 40px/h</option>
+            <option value="48">幅 48px/h</option>
+            <option value="60" selected>幅 60px/h</option>
+            <option value="72">幅 72px/h</option>
+          </select>
+        </div>
+      </div>
+      <div class="timeline">
+        <div class="timeline-axis" id="timelineAxis"></div>
+        <div class="timeline-rows" id="timelineRows"></div>
+      </div>
+      </div>
+    </section>
+
+    <section id="templates" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>ルーチン</h2>
+        <button id="addTemplateBtn" class="btn">+ 追加</button>
+      </div>
+      <div id="templateList" class="chips"></div>
+      </div>
+    </section>
+
+    <section id="routines" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>今日のルーチン</h2>
+      </div>
+      <div id="routineList" class="routine-list"></div>
+      </div>
+    </section>
+
+    <section id="cal-import" class="card hscroll">
+      <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>カレンダー取り込み（ICS）</h2>
+      </div>
+      <div class="control-row">
+        <button id="icsImportBtn" class="btn">ICSファイルを選択</button>
+        <input id="icsFileInput" type="file" accept=".ics,text/calendar" style="display:none;" />
+      </div>
+      <div class="control-row">
+        <textarea id="icsTextInput" class="input" rows="4" placeholder="ICSテキストを貼り付け（オプション）"></textarea>
+      </div>
+      <div class="control-row">
+        <button id="icsParseBtn" class="btn">貼り付けから取り込む（今日のプランへ）</button>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings moved to bottom -->
+  <div class="container">
+  <section id="settings" class="card hscroll">
+    <div class="hscroll-inner">
+    <div class="section-title">
+      <h2>設定</h2>
+    </div>
+    <div class="control-row">
+      <div style="flex:1;">
+        <label class="label">日付境界（時）</label>
+        <input id="dayBoundaryInput" class="input" type="number" inputmode="numeric" min="0" max="12" step="1" placeholder="例: 3 (深夜3時)" />
+      </div>
+      <div style="flex:1; color:#94a3b8; font-size:12px;">0は通常の0:00。3なら深夜3:00以降を翌日扱い。</div>
+    </div>
+    <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+      <div style="flex:1;">
+        <label class="label">就寝時刻</label>
+        <input id="bedtimeInput" class="input" type="time" step="60" />
+      </div>
+      <div style="flex:1; color:#94a3b8; font-size:12px;">全体ETAが就寝時刻を超えると警告します</div>
+    </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">勤務時間（開始/終了）</label>
+          <div class="control-row">
+            <input id="workStartInput" class="input" type="time" step="60" />
+            <input id="workEndInput" class="input" type="time" step="60" />
+          </div>
+        </div>
+        <div style="flex:1;">
+          <label class="label">昼休み（分）</label>
+          <input id="lunchMinInput" class="input" type="number" inputmode="numeric" min="0" max="180" step="5" placeholder="例: 60" />
+        </div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">昼休み（開始/終了）</label>
+          <div class="control-row">
+            <input id="lunchStartInput" class="input" type="time" step="60" />
+            <input id="lunchEndInput" class="input" type="time" step="60" />
+          </div>
+          <div class="label" style="margin-top:4px;">未設定時は「昼休み（分）」の値を使用</div>
+        </div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">自動バックアップ（間隔 分）</label>
+          <div class="control-row">
+            <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+              <input id="autoBackupEnabledCheckbox" type="checkbox" /> 有効
+            </label>
+            <input id="autoBackupIntervalInput" class="input" type="number" inputmode="numeric" min="5" max="720" step="5" placeholder="例: 60" />
+          </div>
+          <div class="label" style="margin-top:4px;">一定間隔でJSONを保存（ダウンロード）します</div>
+        </div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">鎖表示（Chute）</label>
+          <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+            <input id="chainEnabledCheckbox" type="checkbox" /> 鎖表示を有効にする（Now/Next・プラン行に連鎖ETA）
+          </label>
+        </div>
+        <div style="flex:1;">
+          <label class="label">鎖の基点</label>
+          <select id="chainBaseSelect" class="input" style="width:auto;">
+            <option value="now">いま基点</option>
+            <option value="first">最初の未完予定時刻基点</option>
+          </select>
+        </div>
+      </div>
+    <!-- WebDAV設定は削除 -->
+      <div class="control-row" style="margin-top:8px;">
+        <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+          <input id="applyBoundaryToPlanCheckbox" type="checkbox" /> 今日のプラン抽出にも日付境界を適用する
+        </label>
+        <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+          <input id="autoDoneOnStopCheckbox" type="checkbox" /> 停止時に自動で完了
+        </label>
+        <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+          <input id="autoStartNextCheckbox" type="checkbox" /> 停止後に次を自動開始（キュー実行）
+        </label>
+        <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+          <input id="autoEstimateLearnCheckbox" type="checkbox" /> 見積を自動学習で更新（5分単位）
+        </label>
+        <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+          <input id="weeklyBackupReminderCheckbox" type="checkbox" /> 週1回バックアップ通知（日曜20:00）
+        </label>
+        <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:#cbd5e1;">
+          <input id="autoDownloadBackupCheckbox" type="checkbox" /> 通知時に自動でJSONを保存
+        </label>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">ICS展開日数（最大）</label>
+          <input id="icsExpandDaysInput" class="input" type="number" inputmode="numeric" min="7" max="180" step="1" placeholder="例: 35" />
+        </div>
+        <div style="flex:1; color:#94a3b8; font-size:12px;">RRULE展開の上限（日）。大量取り込みの暴走防止</div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">ICS総生成件数の上限</label>
+          <input id="icsMaxEventsInput" class="input" type="number" inputmode="numeric" min="200" max="20000" step="100" placeholder="例: 2000" />
+        </div>
+        <div style="flex:1; color:#94a3b8; font-size:12px;">展開総件数の安全上限。超過時は中断・通知</div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">達成率しきい値（警告%）</label>
+          <input id="budgetWarnThresholdInput" class="input" type="number" inputmode="numeric" min="50" max="120" step="1" placeholder="例: 80" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">達成率しきい値（過剰%）</label>
+          <input id="budgetOverThresholdInput" class="input" type="number" inputmode="numeric" min="90" max="200" step="1" placeholder="例: 110" />
+        </div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">ログ出力レベル</label>
+          <select id="logLevelSelect" class="input">
+            <option value="error">error</option>
+            <option value="warn">warn</option>
+            <option value="info">info</option>
+          </select>
+        </div>
+        <div style="flex:1; color:#94a3b8; font-size:12px;">内部ログの冗長度（問題解析用）</div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Log Detail Modal -->
+  <div id="logDetailBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal" role="document">
+      <h3>詳細ログ</h3>
+      <textarea id="logDetailText" class="input" rows="10" readonly></textarea>
+      <div class="actions" style="margin-top:10px;">
+        <button id="logDetailCopyBtn" class="btn">コピー</button>
+        <button id="logDetailSelectBtn" class="btn">全選択</button>
+        <button id="logDetailExpandBtn" class="btn">拡大</button>
+        <button id="logDetailCloseBtn" class="btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div id="modal" class="modal">
+      <h3>タグ / メモ</h3>
+      <input id="tagsInput" class="input" placeholder="タグ（, 区切り）" />
+      <textarea id="noteInput" class="input" rows="4" placeholder="メモ"></textarea>
+      <div id="stopEstimateInfo" class="label" style="margin-top:6px; color:#fca5a5;"></div>
+      <div style="margin-top:8px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <label style="display:flex; gap:6px; align-items:center;">
+          <input type="radio" name="stopPlanAction" value="continue" checked /> 続ける
+        </label>
+        <label style="display:flex; gap:6px; align-items:center;">
+          <input type="radio" name="stopPlanAction" value="complete" /> 完了にする
+        </label>
+        <label style="display:flex; gap:6px; align-items:center;">
+          <input type="radio" name="stopPlanAction" value="split" /> 分割して残りを残す
+        </label>
+        <label style="display:flex; gap:6px; align-items:center;">
+          <input type="radio" name="stopPlanAction" value="splitTomorrow" /> 分割して明日に残す
+        </label>
+      </div>
+      <div class="actions">
+        <button id="modalCancelBtn" class="btn">スキップ</button>
+        <button id="modalSaveBtn" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Start Link Modal (Ad-hoc start linking to plan) -->
+  <div id="quickStartBackdrop" class="backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="quickStartTitle">
+    <div id="quickStartModal" class="modal" role="document" tabindex="-1">
+      <h3 id="quickStartTitle">クイック開始の紐付け</h3>
+      <label class="label">名称</label>
+      <input id="qsNameInput" class="input" placeholder="タスク名" />
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">見積（分）</label>
+          <select id="qsEstSelect" class="input"></select>
+          <input id="qsEstCustom" class="input" type="number" inputmode="numeric" min="0" max="240" step="1" placeholder="分数を入力" style="display:none; margin-top:6px;" />
+        </div>
+        <div style="flex:2;">
+          <label class="label">タグ（, 区切り 任意）</label>
+          <input id="qsTagsInput" class="input" placeholder="例: 仕事, 調査" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="qsSkipBtn" class="btn">紐付けせず開始</button>
+        <button id="qsSaveBtn" class="btn primary">プランに追加して紐付け</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan Edit Modal -->
+  <div id="planEditBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div id="planEditModal" class="modal">
+      <h3>プラン編集</h3>
+      <label class="label">名称</label>
+      <input id="planNameInput" class="input" placeholder="タスク名" />
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">日付</label>
+          <input id="planDateInput" class="input" type="date" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">予定時刻</label>
+          <input id="planTimeTime" class="input" type="time" inputmode="numeric" step="60" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">見積（分）</label>
+          <select id="planEstSelect" class="input"></select>
+          <input id="planEstCustom" class="input" type="number" inputmode="numeric" min="0" max="240" step="1" placeholder="分数を入力" style="display:none; margin-top:6px;" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="planEditCancelBtn" class="btn">キャンセル</button>
+        <button id="planEditSaveBtn" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Routine Edit Modal -->
+  <div id="routineEditBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div id="routineEditModal" class="modal">
+      <h3>ルーチン編集</h3>
+      <label class="label">名称</label>
+      <input id="routineNameInput" class="input" placeholder="ルーチン名" />
+      <div style="margin-top:8px;">
+        <label class="label">曜日</label>
+        <div id="routineDays" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <label><input type="checkbox" value="0" class="rd" /> 月</label>
+          <label><input type="checkbox" value="1" class="rd" /> 火</label>
+          <label><input type="checkbox" value="2" class="rd" /> 水</label>
+          <label><input type="checkbox" value="3" class="rd" /> 木</label>
+          <label><input type="checkbox" value="4" class="rd" /> 金</label>
+          <label><input type="checkbox" value="5" class="rd" /> 土</label>
+          <label><input type="checkbox" value="6" class="rd" /> 日</label>
+        </div>
+      </div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">予定時刻</label>
+          <input id="routineTimeTime" class="input" type="time" inputmode="numeric" step="60" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">目標（分）</label>
+          <select id="routineEstSelect" class="input"></select>
+          <input id="routineEstCustom" class="input" type="number" inputmode="numeric" min="0" max="240" step="1" placeholder="分数を入力" style="display:none; margin-top:6px;" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">週ターゲット（分）</label>
+          <input id="routineWeeklyTarget" class="input" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="例: 150" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">月ターゲット（分）</label>
+          <input id="routineMonthlyTarget" class="input" type="number" inputmode="numeric" min="0" max="50000" step="1" placeholder="例: 600" />
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <label class="label">デフォルトタグ（, 区切り）</label>
+        <input id="routineTagsInput" class="input" placeholder="例: 家事, 朝" />
+      </div>
+      <div class="actions" style="margin-top:10px;">
+        <button id="routineEditCancelBtn" class="btn">キャンセル</button>
+        <button id="routineEditSaveBtn" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template Select Modal -->
+  <div id="tplSelectBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div id="tplSelectModal" class="modal">
+      <h3>ルーチンから追加</h3>
+      <div id="tplSelectList" class="chips"></div>
+      <div class="actions">
+        <button id="tplSelectCancelBtn" class="btn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="focusOverlay" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div class="focus-modal">
+      <div class="focus-header">
+        <h3 id="focusTaskName">実行中</h3>
+        <button id="focusCloseBtn" class="btn">閉じる</button>
+      </div>
+      <div class="focus-body">
+        <div class="focus-timer" id="focusTimer">00:00</div>
+        <div id="pomodoroCountdown" class="label" style="display:none; color:#fca5a5;">25:00</div>
+        <div class="focus-actions">
+          <button id="focusStopBtn" class="btn danger">停止</button>
+          <button id="focusMemoBtn" class="btn">メモ</button>
+          <button id="focusInterruptBtn" class="btn">割り込み開始</button>
+          <button id="focusBreakBtn" class="btn">休憩</button>
+          <button id="focusPomodoroBtn" class="btn">ポモドーロ</button>
+          <button id="focusExtendBtn" class="btn">延長(+5分)</button>
+        </div>
+        <div class="focus-suggestions">
+          <div class="label">次にやる候補</div>
+          <div id="focusSuggestions" class="chips"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Edit Modal -->
+  <div id="logEditBackdrop" class="backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="logEditTitle">
+    <div id="logEditModal" class="modal" role="document" tabindex="-1">
+      <h3 id="logEditTitle">ログ編集</h3>
+      <h3>ログ編集</h3>
+      <label class="label">名称</label>
+      <input id="logEditName" class="input" placeholder="タスク名" />
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="label">開始</label>
+          <input id="logEditStart" class="input" type="datetime-local" step="60" />
+        </div>
+        <div style="flex:1;">
+          <label class="label">終了</label>
+          <input id="logEditEnd" class="input" type="datetime-local" step="60" />
+        </div>
+      </div>
+      <label class="label" style="margin-top:8px;">タグ（, 区切り）</label>
+      <input id="logEditTags" class="input" placeholder="例: 仕事, 調査" />
+      <label class="label" style="margin-top:8px;">メモ</label>
+      <textarea id="logEditNote" class="input" rows="4" placeholder="メモ"></textarea>
+      <div class="actions">
+        <button id="logEditCancelBtn" class="btn">キャンセル</button>
+        <button id="logEditSaveBtn" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Review -->
+  <div class="container">
+  <section id="review" class="card hscroll">
+    <div class="hscroll-inner">
+      <div class="section-title">
+        <h2>日次レビュー</h2>
+      </div>
+      <div id="reviewContent"></div>
+      <div class="control-row" style="margin-top:8px; align-items:flex-end;">
+        <div style="flex:2;">
+          <label class="label">今日の所感</label>
+          <textarea id="reviewMemo" class="input" rows="3" placeholder="今日の所感"></textarea>
+        </div>
+        <div style="flex:2;">
+          <label class="label">明日への一言</label>
+          <input id="tomorrowNote" class="input" placeholder="明日への一言" />
+        </div>
+        <div>
+          <button id="reviewSaveBtn" class="btn">保存</button>
+          <button id="closeDayBtn" class="btn danger" style="margin-left:8px;">日次を締める</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="section-title"><h2>週次レビュー</h2></div>
+        <div id="reviewWeekContent"></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="section-title"><h2>レビュー履歴（直近）</h2></div>
+        <div id="reviewHistory"></div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  
+
+  <footer class="app-footer">
+    <span>オフライン保存 / CSV出力対応</span>
+  </footer>
+
+  <!-- Undo Toast -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">
+    <span id="toastMsg"></span>
+    <button id="toastUndoBtn" class="btn">元に戻す</button>
+    <button id="toastRetryBtn" class="btn" style="display:none;">再試行</button>
+    <button id="toastDetailBtn" class="btn" style="display:none;">詳細</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
