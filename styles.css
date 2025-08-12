@@ -122,8 +122,12 @@ html, body { margin:0; padding:0; height:100%; background: var(--bg); color: var
 .now-line { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(239,68,68,0.8); border-radius: 2px; z-index: 2; }
 .block { position: absolute; top: 0; height: 100%; border-radius: 6px; color: #001628; font-size: 10px; line-height: 22px; padding-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid rgba(0,0,0,0.2); cursor: default; }
 .block.draggable { cursor: grab; }
-/* Hide "今日のルーチン" card; routines are auto-injected into plan */
-#routines { display: none; }
+/* Show 今日のルーチン card (vertical list) */
+/* previously hidden; now visible by default */
+
+/* Make ルーチン一覧 (#templateList) vertical */
+#templateList { display:flex; flex-direction: column; gap: 8px; }
+#templateList .chip { width: 100%; justify-content: space-between; }
 
 /* Mobile FABs removed */
 
