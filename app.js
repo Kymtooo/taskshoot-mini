@@ -323,7 +323,7 @@
   // Quick Start (ad-hoc) modal helpers
   let pendingQuickStartName = '';
   function openQuickStart(name) {
-    if (!quickStartBackdrop) { startTask({ name, templateId: null }); return; }
+    if (!quickStartBackdrop) { startTask({ name, templateId: null, planId: null }); return; }
     pendingQuickStartName = (name||'').trim();
     if (qsNameInput) qsNameInput.value = pendingQuickStartName;
     buildEstOptions(qsEstSelect); if (qsEstSelect) qsEstSelect.value = '0';
@@ -555,6 +555,7 @@
   }
 
   // -------- Rendering --------
+  // Restore full rendering since plan/routine/timeline/modal are back
   function render() {
     renderControls();
     renderTemplates();
@@ -2141,7 +2142,6 @@ function addPlanItem({ name, templateId, estimateMin, scheduledAt }) {
         renderNowNextBar(todays);
       }
     } catch {}
-    // Throttle heavy timeline rendering: once per minute and only if visible + intersecting
     try {
       const nowSec = Math.floor(Date.now()/1000);
       const visible = (document.visibilityState === 'visible');

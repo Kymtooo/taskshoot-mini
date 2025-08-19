@@ -158,6 +158,18 @@ html, body { margin:0; padding:0; height:100%; background: var(--bg); color: var
   box-shadow: 0 0 0 1px rgba(56,189,248,0.35) inset;
 }
 
+/* --- Minimal MVP: Hide selected advanced sections --- */
+#cal-import,
+#review,
+#settings {
+  display: none !important;
+}
+
+/* Keep only header, Now/Next, control, summary (for 合計 text), search, logs, footer visible */
+#summary .summary-grid { display: none; }
+/* Keep totals row visible but compact */
+.totals { margin-top: 0; }
+
 /* Make calendar/time picker icons visible on dark theme */
 .input::-webkit-calendar-picker-indicator,
 input[type="date"]::-webkit-calendar-picker-indicator,

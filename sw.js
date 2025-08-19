@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taskshoot-mini-v2';
+const CACHE_NAME = 'taskshoot-mini-v3';
 const ASSETS = [
   './',
   './index.html',

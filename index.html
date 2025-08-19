@@ -19,11 +19,11 @@
     <div class="header-actions">
       <div id="todayTotal" class="today-total">今日 合計 0秒</div>
       <button id="installBtn" class="btn" style="display:none;">ホームに追加</button>
-      <button id="exportIcsBtn" class="btn">ICS(今日)</button>
-      <button id="exportJsonBtn" class="btn">JSONエクスポート</button>
-      <button id="importJsonBtn" class="btn">JSONインポート</button>
-      <input id="importJsonFile" type="file" accept="application/json,.json" style="display:none;" />
-      <button id="exportCsvBtn" class="btn">CSVエクスポート</button>
+       <button id="exportIcsBtn" class="btn">ICS(今日)</button>
+       <button id="exportJsonBtn" class="btn">JSONエクスポート</button>
+       <button id="importJsonBtn" class="btn">JSONインポート</button>
+       <input id="importJsonFile" type="file" accept="application/json,.json" style="display:none;" />
+       <button id="exportCsvBtn" class="btn">CSVエクスポート</button>
     </div>
   </header>
 
@@ -42,8 +42,8 @@
       </div>
       <div class="control-row">
         <button id="startStopBtn" class="btn primary big fab">開始</button>
-        <button id="quickNoteBtn" class="btn ghost" style="display:none;">メモ</button>
-        <button id="focusBtn" class="btn" style="display:none;">集中</button>
+         <button id="quickNoteBtn" class="btn ghost" style="display:none;">メモ</button>
+         <button id="focusBtn" class="btn" style="display:none;">集中</button>
       </div>
       <div id="runningInfo" class="running-info" style="display:none;"></div>
       </div>
@@ -70,13 +70,13 @@
 
     <section id="summary" class="card hscroll">
       <div class="hscroll-inner">
-      <div class="section-title">
+      <div class="section-title" style="display:none;">
         <h2>サマリ</h2>
       </div>
       <div class="summary-grid">
         <div>
-          <label class="label">期間</label>
-          <select id="rangeSelect" class="input">
+          <label class="label" style="display:none;">期間</label>
+          <select id="rangeSelect" class="input" style="display:none;">
             <option value="today">今日</option>
             <option value="week">今週</option>
             <option value="all">全期間</option>
@@ -172,7 +172,7 @@
       </div>
     </section>
 
-    <section id="cal-import" class="card hscroll">
+    <section id="cal-import" class="card hscroll" style="display:none;">
       <div class="hscroll-inner">
       <div class="section-title">
         <h2>カレンダー取り込み（ICS）</h2>
@@ -529,7 +529,7 @@
 
   <!-- Daily Review -->
   <div class="container">
-  <section id="review" class="card hscroll">
+  <section id="review" class="card hscroll" style="display:none;">
     <div class="hscroll-inner">
       <div class="section-title">
         <h2>日次レビュー</h2>
